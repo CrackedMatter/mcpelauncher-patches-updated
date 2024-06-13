@@ -22,17 +22,17 @@ extern "C" void __attribute__ ((visibility ("default"))) mod_init() {
     };
 
     // getMaxSimRadiusInChunks
-    vt[229] = (void*) +[](void*) -> int {
+    vt[230] = (void*) +[](void*) -> int {
         return 12;
     };
 
     // getEdition
-    vt[247] = (void*) +[](void*) -> std::string {
+    vt[248] = (void*) +[](void*) -> std::string {
         return "win10";
     };
 
     // getDefaultNetworkMaxPlayers
-    vt[196] = (void*) +[](void*) -> int {
+    vt[197] = (void*) +[](void*) -> int {
         return 8;
     };
 
