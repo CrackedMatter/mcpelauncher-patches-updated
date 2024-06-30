@@ -1,43 +1,50 @@
-#include "sig.hpp"
-#include <android/log.h>
+#include <android/native_activity.h>
 #include <dlfcn.h>
+#include <string>
 
-extern "C" void __attribute__ ((visibility ("default"))) mod_preinit() {}
+extern "C" __attribute__ ((visibility ("default"))) void mod_preinit() {
+    auto h = dlopen("libmcpelauncher_mod.so", 0);
 
-extern "C" void __attribute__ ((visibility ("default"))) mod_init() {
-    auto mc = dlopen("libminecraftpe.so", 0);
+    auto mcpelauncher_preinithook = (void (*)(const char*, void*, void**)) dlsym(h, "mcpelauncher_preinithook");
 
-    auto addr = findSig("48 8D 05 ? ? ? ? 48 89 03 48 8D 05 ? ? ? ? 48 89 43 18 48 B8 56 03 00 00 E0 01", mc);
+    static ANativeActivity_createFunc* onCreate_orig;
 
-    if (!addr) {
-        __android_log_print(ANDROID_LOG_ERROR, "Patches", "Failed to find AppPlatform_android vtable");
-        return;
-    }
+    mcpelauncher_preinithook("ANativeActivity_onCreate", (void*) +[](ANativeActivity* activity, void* savedState, size_t savedStateSize) {
+        onCreate_orig(activity, savedState, savedStateSize);
 
-    auto vt = (void**) (addr + *(int*) (addr + 3) + 7);
+        static auto onStart_orig = activity->callbacks->onStart;
 
-    // supportsFilePicking
-    vt[82] = (void*) +[](void*) -> bool {
-        return true;
-    };
+        activity->callbacks->onStart = +[](ANativeActivity* activity) {
+            onStart_orig(activity);
 
-    // getMaxSimRadiusInChunks
-    vt[230] = (void*) +[](void*) -> int {
-        return 12;
-    };
+            auto vt = ((void*****) activity->instance)[0][1][0];
 
-    // getEdition
-    vt[248] = (void*) +[](void*) -> std::string {
-        return "win10";
-    };
+            // blankLineDismissesChat
+            vt[39] = (void*) +[](void*) -> bool {
+                return true;
+            };
 
-    // getDefaultNetworkMaxPlayers
-    vt[197] = (void*) +[](void*) -> int {
-        return 8;
-    };
+            // supportsFilePicking
+            vt[82] = (void*) +[](void*) -> bool {
+                return true;
+            };
 
-    // blankLineDismissesChat
-    vt[39] = (void*) +[](void*) -> bool {
-        return true;
-    };
+            // getDefaultNetworkMaxPlayers
+            vt[197] = (void*) +[](void*) -> int {
+                return 8;
+            };
+
+            // getMaxSimRadiusInChunks
+            vt[230] = (void*) +[](void*) -> int {
+                return 12;
+            };
+
+            // getEdition
+            vt[248] = (void*) +[](void*) -> std::string {
+                return "win10";
+            };
+        };
+    }, (void**) &onCreate_orig);
 }
+
+extern "C" __attribute__ ((visibility ("default"))) void mod_init() {}
