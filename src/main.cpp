@@ -2,6 +2,37 @@
 #include <dlfcn.h>
 #include <string>
 
+struct AppPlatform_vtable {
+#if MC_VERSION >= 1021020
+    void* pad0[38];
+#else
+    void* pad0[39];
+#endif
+    bool (* blankLineDismissesChat)(void*);
+    void* pad1[42];
+    bool (* supportsFilePicking)(void*);
+#if MC_VERSION >= 1021020
+    void* pad2[115];
+#elif MC_VERSION >= 1021000
+    void* pad2[114];
+#elif MC_VERSION >= 1020080
+    void* pad2[113];
+#else
+    void* pad2[112];
+#endif
+    int (* getDefaultNetworkMaxPlayers)(void*);
+    void* pad3[32];
+    int (* getMaxSimRadiusInChunks)(void*);
+#if MC_VERSION >= 1021030
+    void* pad4[18];
+#elif MC_VERSION >= 1020060
+    void* pad4[17];
+#else
+    void* pad4[18];
+#endif
+    std::string (* getEdition)(void*);
+};
+
 extern "C" __attribute__ ((visibility ("default"))) void mod_preinit() {
     auto h = dlopen("libmcpelauncher_mod.so", 0);
 
@@ -17,30 +48,25 @@ extern "C" __attribute__ ((visibility ("default"))) void mod_preinit() {
         activity->callbacks->onStart = +[](ANativeActivity* activity) {
             onStart_orig(activity);
 
-            auto vt = ((void*****) activity->instance)[0][1][0];
+            auto vt = *((AppPlatform_vtable****) activity->instance)[0][1];
 
-            // blankLineDismissesChat
-            vt[39] = (void*) +[](void*) -> bool {
+            vt->blankLineDismissesChat = +[](void*) -> bool {
                 return true;
             };
 
-            // supportsFilePicking
-            vt[82] = (void*) +[](void*) -> bool {
+            vt->supportsFilePicking = +[](void*) -> bool {
                 return true;
             };
 
-            // getDefaultNetworkMaxPlayers
-            vt[197] = (void*) +[](void*) -> int {
+            vt->getDefaultNetworkMaxPlayers = +[](void*) -> int {
                 return 8;
             };
 
-            // getMaxSimRadiusInChunks
-            vt[230] = (void*) +[](void*) -> int {
+            vt->getMaxSimRadiusInChunks = +[](void*) -> int {
                 return 12;
             };
 
-            // getEdition
-            vt[248] = (void*) +[](void*) -> std::string {
+            vt->getEdition = +[](void*) -> std::string {
                 return "win10";
             };
         };
