@@ -3,7 +3,9 @@
 #include <string>
 
 struct AppPlatform_vtable {
-#if MC_VERSION >= 1021020
+#if MC_VERSION >= 1021040
+    void* pad0[40];
+#elif MC_VERSION >= 1021020
     void* pad0[38];
 #else
     void* pad0[39];
@@ -21,7 +23,11 @@ struct AppPlatform_vtable {
     void* pad2[112];
 #endif
     int (* getDefaultNetworkMaxPlayers)(void*);
+#if MC_VERSION >= 1021040
+    void* pad3[33];
+#else
     void* pad3[32];
+#endif
     int (* getMaxSimRadiusInChunks)(void*);
 #if MC_VERSION >= 1021030
     void* pad4[18];
