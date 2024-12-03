@@ -4,7 +4,7 @@ project(mcpelauncherpatchesupdated)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(MC_VERSION "1021040" CACHE STRING "Minecraft version")
+set(MC_VERSION "1021050" CACHE STRING "Minecraft version")
 
 add_library(mcpelauncherpatchesupdated SHARED src/main.cpp)
 

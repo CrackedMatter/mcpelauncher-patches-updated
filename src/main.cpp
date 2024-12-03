@@ -23,7 +23,9 @@ struct AppPlatform_vtable {
     void* pad2[112];
 #endif
     int (* getDefaultNetworkMaxPlayers)(void*);
-#if MC_VERSION >= 1021040
+#if MC_VERSION >= 1021050
+    void* pad3[34];
+#elif MC_VERSION >= 1021040
     void* pad3[33];
 #else
     void* pad3[32];
