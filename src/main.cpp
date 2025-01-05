@@ -1,6 +1,7 @@
 #include <android/native_activity.h>
 #include <dlfcn.h>
 #include <string>
+#include <thread>
 
 struct AppPlatform_vtable {
 #if MC_VERSION >= 1021040
@@ -53,12 +54,11 @@ extern "C" [[gnu::visibility("default")]] void mod_preinit() {
         (void*)+[](ANativeActivity* activity, void* savedState, size_t savedStateSize) {
             onCreate_orig(activity, savedState, savedStateSize);
 
-            static auto onStart_orig = activity->callbacks->onStart;
+            std::thread{[instance = (AppPlatform_vtable****)activity->instance] {
+                while (!instance[0])
+                    asm("" ::: "memory"); // prevent loop being optimized away
 
-            activity->callbacks->onStart = +[](ANativeActivity* activity) {
-                onStart_orig(activity);
-
-                auto vt = *((AppPlatform_vtable****)activity->instance)[0][1];
+                auto vt = instance[0][1][0];
 
                 vt->blankLineDismissesChat = +[](void*) -> bool {
                     return true;
@@ -79,7 +79,7 @@ extern "C" [[gnu::visibility("default")]] void mod_preinit() {
                 vt->getEdition = +[](void*) -> std::string {
                     return "win10";
                 };
-            };
+            }}.detach();
         },
         (void**)&onCreate_orig);
 }
