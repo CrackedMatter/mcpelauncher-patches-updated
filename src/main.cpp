@@ -41,7 +41,7 @@ struct AppPlatform_vtable {
     std::string (* getEdition)(void*);
 };
 
-extern "C" __attribute__ ((visibility ("default"))) void mod_preinit() {
+extern "C" [[gnu::visibility("default")]] void mod_preinit() {
     auto h = dlopen("libmcpelauncher_mod.so", 0);
 
     auto mcpelauncher_preinithook = (void (*)(const char*, void*, void**)) dlsym(h, "mcpelauncher_preinithook");
@@ -81,4 +81,4 @@ extern "C" __attribute__ ((visibility ("default"))) void mod_preinit() {
     }, (void**) &onCreate_orig);
 }
 
-extern "C" __attribute__ ((visibility ("default"))) void mod_init() {}
+extern "C" [[gnu::visibility("default")]] void mod_init() {}
