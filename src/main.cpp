@@ -54,9 +54,9 @@ extern "C" [[gnu::visibility("default")]] void mod_preinit() {
         (void*)+[](ANativeActivity* activity, void* savedState, size_t savedStateSize) {
             onCreate_orig(activity, savedState, savedStateSize);
 
-            std::thread{[instance = (AppPlatform_vtable****)activity->instance] {
+            std::thread{[instance = (AppPlatform_vtable*** volatile*)activity->instance] {
                 while (!instance[0])
-                    asm("" ::: "memory"); // prevent loop being optimized away
+                    ;
 
                 auto vt = instance[0][1][0];
 
