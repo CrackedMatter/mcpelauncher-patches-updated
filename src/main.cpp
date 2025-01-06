@@ -1,45 +1,72 @@
+#define LOG_TAG "Patches"
+#include <android/log_macros.h>
 #include <android/native_activity.h>
 #include <dlfcn.h>
 #include <string>
 #include <thread>
+#include <tuple>
 
-struct AppPlatform_vtable {
-#if MC_VERSION >= 1021040
-    void* pad0[40];
-#elif MC_VERSION >= 1021020
-    void* pad0[38];
-#else
-    void* pad0[39];
-#endif
-    bool (*blankLineDismissesChat)(void*);
-    void* pad1[42];
-    bool (*supportsFilePicking)(void*);
-#if MC_VERSION >= 1021020
-    void* pad2[115];
-#elif MC_VERSION >= 1021000
-    void* pad2[114];
-#elif MC_VERSION >= 1020080
-    void* pad2[113];
-#else
-    void* pad2[112];
-#endif
-    int (*getDefaultNetworkMaxPlayers)(void*);
-#if MC_VERSION >= 1021050
-    void* pad3[34];
-#elif MC_VERSION >= 1021040
-    void* pad3[33];
-#else
-    void* pad3[32];
-#endif
-    int (*getMaxSimRadiusInChunks)(void*);
-#if MC_VERSION >= 1021030
-    void* pad4[18];
-#elif MC_VERSION >= 1020060
-    void* pad4[17];
-#else
-    void* pad4[18];
-#endif
-    std::string (*getEdition)(void*);
+template<int32_t>
+struct AppPlatform_vtable;
+
+#define MC_VERSION 1021050
+#include "vtable.inl"
+#define MC_VERSION 1021040
+#include "vtable.inl"
+#define MC_VERSION 1021030
+#include "vtable.inl"
+#define MC_VERSION 1021020
+#include "vtable.inl"
+#define MC_VERSION 1021000
+#include "vtable.inl"
+#define MC_VERSION 1020080
+#include "vtable.inl"
+#define MC_VERSION 1020070
+#include "vtable.inl"
+#define MC_VERSION 1020060
+#include "vtable.inl"
+#define MC_VERSION 1020050
+#include "vtable.inl"
+
+struct AppPlatform_offsets {
+    uint16_t blankLineDismissesChat;
+    uint16_t supportsFilePicking;
+    uint16_t getDefaultNetworkMaxPlayers;
+    uint16_t getMaxSimRadiusInChunks;
+    uint16_t getEdition;
+
+    template<int32_t Version>
+    static consteval AppPlatform_offsets get() {
+        using T = AppPlatform_vtable<Version>;
+        return {
+            .blankLineDismissesChat      = offsetof(T, blankLineDismissesChat),
+            .supportsFilePicking         = offsetof(T, supportsFilePicking),
+            .getDefaultNetworkMaxPlayers = offsetof(T, getDefaultNetworkMaxPlayers),
+            .getMaxSimRadiusInChunks     = offsetof(T, getMaxSimRadiusInChunks),
+            .getEdition                  = offsetof(T, getEdition),
+        };
+    }
+
+    static AppPlatform_offsets get(int minor, int patch) {
+        if (minor >= 21) {
+            if (patch >= 50)
+                return get<1021050>();
+            if (patch >= 40)
+                return get<1021040>();
+            if (patch >= 30)
+                return get<1021030>();
+            if (patch >= 20)
+                return get<1021020>();
+            return get<1021000>();
+        }
+        if (patch >= 80)
+            return get<1020080>();
+        if (patch >= 70)
+            return get<1020070>();
+        if (patch >= 60)
+            return get<1020060>();
+        return get<1020050>();
+    }
 };
 
 extern "C" [[gnu::visibility("default")]] void mod_preinit() {
@@ -54,29 +81,55 @@ extern "C" [[gnu::visibility("default")]] void mod_preinit() {
         (void*)+[](ANativeActivity* activity, void* savedState, size_t savedStateSize) {
             onCreate_orig(activity, savedState, savedStateSize);
 
-            std::thread{[instance = (AppPlatform_vtable*** volatile*)activity->instance] {
+            Dl_info info;
+            dladdr((void*)onCreate_orig, &info);
+
+            auto version = info.dli_fname + strlen(info.dli_fname) - 1;
+            for (int n = 4; version >= info.dli_fname; --version) {
+                if (*version == '/' && --n == 0)
+                    break;
+            }
+
+            int major, minor, patch, revision;
+            if (sscanf(++version, "%d.%d.%d.%d", &major, &minor, &patch, &revision) != 4) {
+                ALOGE("Failed to detect version");
+                return;
+            }
+
+            if (std::tie(major, minor, patch) < std::tuple{1, 20, 50}) {
+                ALOGE("Versions before 1.20.50 are unsupported");
+                return;
+            }
+
+            if (revision >= 20) {
+                ALOGE("Beta versions are unsupported");
+                return;
+            }
+
+            std::thread{[instance = (uintptr_t** volatile*)activity->instance,
+                         offsets  = AppPlatform_offsets::get(minor, patch)] {
                 while (!instance[0])
                     ;
 
                 auto vt = instance[0][1][0];
 
-                vt->blankLineDismissesChat = +[](void*) -> bool {
+                *(void**)(vt + offsets.blankLineDismissesChat) = (void*)+[](void*) -> bool {
                     return true;
                 };
 
-                vt->supportsFilePicking = +[](void*) -> bool {
+                *(void**)(vt + offsets.supportsFilePicking) = (void*)+[](void*) -> bool {
                     return true;
                 };
 
-                vt->getDefaultNetworkMaxPlayers = +[](void*) -> int {
+                *(void**)(vt + offsets.getDefaultNetworkMaxPlayers) = (void*)+[](void*) -> int {
                     return 8;
                 };
 
-                vt->getMaxSimRadiusInChunks = +[](void*) -> int {
+                *(void**)(vt + offsets.getMaxSimRadiusInChunks) = (void*)+[](void*) -> int {
                     return 12;
                 };
 
-                vt->getEdition = +[](void*) -> std::string {
+                *(void**)(vt + offsets.getEdition) = (void*)+[](void*) -> std::string {
                     return "win10";
                 };
             }}.detach();
