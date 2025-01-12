@@ -7,9 +7,9 @@ struct AppPlatform_vtable<MC_VERSION> {
 #else
     void* pad0[39];
 #endif
-    bool (*blankLineDismissesChat)(void*);
+    void* blankLineDismissesChat;
     void* pad1[42];
-    bool (*supportsFilePicking)(void*);
+    void* supportsFilePicking;
 #if MC_VERSION >= 1021020
     void* pad2[115];
 #elif MC_VERSION >= 1021000
@@ -19,7 +19,7 @@ struct AppPlatform_vtable<MC_VERSION> {
 #else
     void* pad2[112];
 #endif
-    int (*getDefaultNetworkMaxPlayers)(void*);
+    void* getDefaultNetworkMaxPlayers;
 #if MC_VERSION >= 1021050
     void* pad3[34];
 #elif MC_VERSION >= 1021040
@@ -27,7 +27,7 @@ struct AppPlatform_vtable<MC_VERSION> {
 #else
     void* pad3[32];
 #endif
-    int (*getMaxSimRadiusInChunks)(void*);
+    void* getMaxSimRadiusInChunks;
 #if MC_VERSION >= 1021030
     void* pad4[18];
 #elif MC_VERSION >= 1020060
@@ -35,6 +35,6 @@ struct AppPlatform_vtable<MC_VERSION> {
 #else
     void* pad4[18];
 #endif
-    std::string (*getEdition)(void*);
+    void* getEdition;
 };
 #undef MC_VERSION
