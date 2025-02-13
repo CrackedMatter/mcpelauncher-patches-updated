@@ -106,10 +106,10 @@ extern "C" [[gnu::visibility("default")]] void mod_preinit() {
                 return;
             }
 
-            std::thread{[instance = (uintptr_t** volatile*)activity->instance,
+            std::thread{[instance = (uintptr_t***)activity->instance,
                          offsets  = AppPlatform_offsets::get(minor, patch)] {
                 while (!instance[0])
-                    ;
+                    std::this_thread::yield();
 
                 auto vt = instance[0][1][0];
 
