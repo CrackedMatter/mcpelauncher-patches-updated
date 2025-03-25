@@ -9,6 +9,8 @@
 template<int32_t>
 struct AppPlatform_vtable;
 
+#define MC_VERSION 1021070
+#include "vtable.inl"
 #define MC_VERSION 1021060
 #include "vtable.inl"
 #define MC_VERSION 1021050
@@ -51,6 +53,8 @@ struct AppPlatform_offsets {
 
     static AppPlatform_offsets get(int minor, int patch) {
         if (minor >= 21) {
+            if (patch >= 70)
+                return get<1021070>();
             if (patch >= 60)
                 return get<1021060>();
             if (patch >= 50)

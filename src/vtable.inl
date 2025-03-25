@@ -1,6 +1,8 @@
 template<>
 struct AppPlatform_vtable<MC_VERSION> {
-#if MC_VERSION >= 1021060
+#if MC_VERSION >= 1021070
+    void* pad0[41];
+#elif MC_VERSION >= 1021060
     void* pad0[42];
 #elif MC_VERSION >= 1021040
     void* pad0[40];
@@ -22,7 +24,9 @@ struct AppPlatform_vtable<MC_VERSION> {
     void* pad2[112];
 #endif
     void* getDefaultNetworkMaxPlayers;
-#if MC_VERSION >= 1021060
+#if MC_VERSION >= 1021070
+    void* pad3[37];
+#elif MC_VERSION >= 1021060
     void* pad3[36];
 #elif MC_VERSION >= 1021050
     void* pad3[34];
