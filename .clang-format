@@ -1,5 +1,6 @@
 BasedOnStyle: LLVM
 AlignConsecutiveAssignments: Consecutive
+AllowShortIfStatementsOnASingleLine: WithoutElse
 ColumnLimit: 0
 IndentWidth: 4
 PointerAlignment: Left

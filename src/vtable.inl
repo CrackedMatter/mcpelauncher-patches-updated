@@ -12,9 +12,17 @@ struct AppPlatform_vtable<MC_VERSION> {
     void* pad0[39];
 #endif
     void* blankLineDismissesChat;
+#if MC_VERSION >= 1021090
     void* pad1[42];
+#elif MC_VERSION >= 1021080
+    void* pad1[43];
+#else
+    void* pad1[42];
+#endif
     void* supportsFilePicking;
-#if MC_VERSION >= 1021020
+#if MC_VERSION >= 1021080
+    void* pad2[114];
+#elif MC_VERSION >= 1021020
     void* pad2[115];
 #elif MC_VERSION >= 1021000
     void* pad2[114];
